@@ -18,31 +18,16 @@ const GameCell: React.FC<GameCellProps> = ({ value, onClick, isWinningCell, disa
       disabled={disabled || value !== null}
       className={cn(
         "w-full aspect-square rounded-lg flex items-center justify-center",
-        "transition-all duration-300 transform",
-        "bg-white/90 backdrop-blur-sm shadow-lg",
-        value === null && !disabled && "hover:bg-white hover:scale-105 hover:shadow-xl",
-        isWinningCell && "bg-orange-100 animate-bounce shadow-orange-400/50",
-        disabled && "cursor-not-allowed opacity-80"
+        "bg-white/90 hover:bg-white",
+        isWinningCell && "bg-orange-100",
+        disabled && "opacity-80"
       )}
-      aria-label={value ? `Cell with ${value}` : "Empty cell"}
     >
       {value === 'X' && (
-        <X 
-          className={cn(
-            "w-12 h-12 text-indigo-600 animate-pop-in", 
-            isWinningCell && "text-orange-500"
-          )} 
-          strokeWidth={3} 
-        />
+        <X className="w-12 h-12 text-indigo-600" />
       )}
       {value === 'O' && (
-        <Circle 
-          className={cn(
-            "w-12 h-12 text-purple-500 animate-pop-in", 
-            isWinningCell && "text-orange-500"
-          )} 
-          strokeWidth={3} 
-        />
+        <Circle className="w-12 h-12 text-purple-500" />
       )}
     </button>
   );

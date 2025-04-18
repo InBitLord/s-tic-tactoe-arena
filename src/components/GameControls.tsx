@@ -6,15 +6,7 @@ import {
   RotateCw, 
   Users, 
   Cpu,
-  BarChart3
 } from 'lucide-react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 
 interface GameControlsProps {
   onReset: () => void;
@@ -30,60 +22,33 @@ const GameControls: React.FC<GameControlsProps> = ({
   onShowStats
 }) => {
   return (
-    <div className="w-full max-w-md mx-auto mt-6 animate-fade-in">
+    <div className="w-full max-w-md mx-auto mt-6">
       <div className="flex flex-wrap gap-4 justify-center">
         <Button 
           onClick={onReset} 
           variant="outline"
-          className="bg-white/80 hover:bg-white"
+          className="bg-white/80"
         >
           <RotateCw className="w-4 h-4 mr-2" />
           New Game
         </Button>
         
-        <div className="flex items-center">
-          <Select 
-            value={currentMode} 
-            onValueChange={(value) => onModeChange(value as GameMode)}
-          >
-            <SelectTrigger className="w-36 bg-white/80">
-              <SelectValue placeholder="Game Mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="human">
-                <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-2" />
-                  Human vs Human
-                </div>
-              </SelectItem>
-              <SelectItem value="easy">
-                <div className="flex items-center">
-                  <Cpu className="w-4 h-4 mr-2" />
-                  AI: Easy
-                </div>
-              </SelectItem>
-              <SelectItem value="medium">
-                <div className="flex items-center">
-                  <Cpu className="w-4 h-4 mr-2" />
-                  AI: Medium
-                </div>
-              </SelectItem>
-              <SelectItem value="hard">
-                <div className="flex items-center">
-                  <Cpu className="w-4 h-4 mr-2" />
-                  AI: Hard
-                </div>
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <select 
+          value={currentMode} 
+          onChange={(e) => onModeChange(e.target.value as GameMode)}
+          className="px-4 py-2 rounded-md bg-white/80"
+        >
+          <option value="human">Human vs Human</option>
+          <option value="easy">AI: Easy</option>
+          <option value="medium">AI: Medium</option>
+          <option value="hard">AI: Hard</option>
+        </select>
         
         <Button 
           onClick={onShowStats}
           variant="outline"
-          className="bg-white/80 hover:bg-white"
+          className="bg-white/80"
         >
-          <BarChart3 className="w-4 h-4 mr-2" />
           Stats
         </Button>
       </div>
