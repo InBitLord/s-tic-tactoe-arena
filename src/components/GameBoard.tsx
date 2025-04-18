@@ -13,8 +13,8 @@ const GameBoard: React.FC<GameBoardProps> = ({ gameState, onCellClick }) => {
   const disabled = status !== 'playing';
 
   return (
-    <div className="w-full max-w-md mx-auto animate-fade-in">
-      <div className="grid grid-cols-3 gap-3 p-2">
+    <div className="w-full max-w-md mx-auto">
+      <div className="grid grid-cols-3 gap-4 p-4 rounded-xl bg-white/10 backdrop-blur-sm animate-fade-in">
         {board.map((cell, index) => (
           <GameCell
             key={index}
