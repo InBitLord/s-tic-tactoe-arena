@@ -1,207 +1,350 @@
-
 # Tic Tac Toe Game Project Manual
 
 ## Project Structure 🗂️
 ```
 src/
-├── components/           # Contains all React components
-│   ├── GameBoard.tsx    # Main game board component
-│   ├── GameCell.tsx     # Individual cell component
-│   ├── GameControls.tsx # Game control buttons
-│   ├── GameHeader.tsx   # Game header with status
-│   └── GameStats.tsx    # Statistics display component
-├── utils/               # Helper functions and game logic
-│   ├── aiPlayer.ts     # AI opponent logic
-│   ├── gameLogic.ts    # Core game rules and state
-│   └── scoreManager.ts  # Score handling and storage
-├── App.tsx             # Root component
-└── index.css           # Global styles
+├── components/           # All React components live here
+│   ├── GameBoard.tsx    # Main game grid
+│   ├── GameCell.tsx     # Individual square
+│   ├── GameControls.tsx # Game buttons
+│   ├── GameHeader.tsx   # Status display
+│   └── GameStats.tsx    # Score display
+├── utils/               # Helper functions
+│   ├── aiPlayer.ts      # Computer opponent
+│   ├── gameLogic.ts     # Game rules
+│   └── scoreManager.ts  # Score tracking
+├── App.tsx             # Main app file
+└── index.css           # Styling
 ```
 
-## Detailed File Explanations 📑
+## Line-by-Line File Explanations 📝
 
-### 1. Core Game Files
-
-#### `src/App.tsx`
-This is the main application file that brings everything together.
-- Sets up routing and the game's foundation
-- Handles global state management
-- Provides toast notifications for game events
-- Sets up the QueryClient for data management
-
-#### `src/index.css`
-Global styles for the entire application:
-- Defines custom CSS variables for colors
-- Contains animation keyframes
-- Sets up the game's background gradient
-- Defines utility classes
-
-### 2. Component Files
-
-#### `src/components/GameBoard.tsx`
-The main game board component:
-- Renders a 3x3 grid of cells
-- Handles the game board's layout
-- Manages cell click interactions
-- Highlights winning combinations
+### 1. `src/App.tsx`
+This is like the main entrance of our app:
 ```typescript
-// Key parts explained:
+// Imports needed tools for notifications and routing
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
+
+// Sets up data management
+const queryClient = new QueryClient();
+
+// Main app structure that wraps everything
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <Toaster />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  </QueryClientProvider>
+);
+```
+
+### 2. `src/components/GameBoard.tsx`
+The game grid component:
+```typescript
+// Defines what info GameBoard needs
 interface GameBoardProps {
-  gameState: GameState;  // Current state of the game
-  onCellClick: (index: number) => void;  // Handler for cell clicks
+  gameState: GameState;  // Current game situation
+  onCellClick: (index: number) => void;  // What happens when clicked
 }
+
+// The actual game board layout:
+return (
+  <div className="grid grid-cols-3 gap-4">
+    {board.map((cell, index) => (
+      // Creates 9 cells in a 3x3 grid
+      <GameCell
+        key={index}
+        value={cell}  // X, O, or empty
+        onClick={() => onCellClick(index)}
+        isWinningCell={winningLine?.includes(index)}
+        disabled={status !== 'playing'}
+      />
+    ))}
+  </div>
+);
 ```
 
-#### `src/components/GameCell.tsx`
-Individual cell component for the game board:
-- Renders either X, O, or empty space
-- Handles click events
-- Shows visual feedback for wins
-- Manages disabled state
+### 3. `src/components/GameCell.tsx`
+Each clickable square:
 ```typescript
-// Props explanation:
+// What each cell needs to work
 interface GameCellProps {
-  value: CellValue;  // X, O, or null
+  value: CellValue;  // X, O, or empty
   onClick: () => void;  // Click handler
-  isWinningCell: boolean;  // For highlighting winning cells
-  disabled: boolean;  // Prevents clicking when game is over
+  isWinningCell: boolean;  // For highlighting winners
+  disabled: boolean;  // Prevents invalid clicks
 }
+
+// The button that shows X, O, or nothing
+return (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className="bg-white/90 rounded-lg"
+  >
+    {value === 'X' ? <X /> : value === 'O' ? <Circle /> : null}
+  </button>
+);
 ```
 
-#### `src/components/GameControls.tsx`
-Game control interface:
-- New game button
-- Game mode selector
-- Stats display trigger
-- Uses Lucide icons for better visuals
+### 4. `src/components/GameHeader.tsx`
+Shows game status:
 ```typescript
-interface GameControlsProps {
-  onReset: () => void;  // Starts new game
-  onModeChange: (mode: GameMode) => void;  // Changes AI difficulty
-  currentMode: GameMode;  // Current game mode
-  onShowStats: () => void;  // Shows statistics
-}
-```
-
-#### `src/components/GameHeader.tsx`
-Header component showing game status:
-- Displays current player
-- Shows game status (win/draw)
-- Uses icons for player indicators
-```typescript
+// Header needs to know game state
 interface GameHeaderProps {
-  gameState: GameState;  // Current game state
+  gameState: GameState;
 }
+
+// Shows whose turn it is or who won
+return (
+  <div className="text-center">
+    <h1>Tic Tac Toe Game</h1>
+    {status === 'playing' ? (
+      <div>Current Player: {currentPlayer}</div>
+    ) : status === 'won' ? (
+      <div>Winner: {gameState.currentPlayer === 'X' ? 'O' : 'X'}</div>
+    ) : (
+      <div>Game Draw!</div>
+    )}
+  </div>
+);
 ```
 
-#### `src/components/GameStats.tsx`
-Statistics display component:
-- Shows game statistics in a modal
-- Displays wins, losses, and draws
-- Separates stats by game mode
-- Uses shadcn/ui components for styling
-
-### 3. Utility Files
-
-#### `src/utils/gameLogic.ts`
-Core game logic:
-- Defines game state types
-- Handles winning combinations
-- Manages game state updates
-- Contains game rules
+### 5. `src/utils/gameLogic.ts`
+The rules of the game:
 ```typescript
-// Important types:
+// Defines what values can be in each cell
 type CellValue = 'X' | 'O' | null;
-type GameMode = 'human' | 'easy' | 'medium' | 'hard';
-type GameStatus = 'playing' | 'won' | 'draw';
+
+// All possible winning lines (rows, columns, diagonals)
+export const WINNING_COMBINATIONS = [
+  [0, 1, 2], // Top row
+  [3, 4, 5], // Middle row
+  [6, 7, 8], // Bottom row
+  [0, 3, 6], // Left column
+  [1, 4, 7], // Middle column
+  [2, 5, 8], // Right column
+  [0, 4, 8], // Diagonal top-left to bottom-right
+  [2, 4, 6]  // Diagonal top-right to bottom-left
+];
+
+// Checks if someone won
+export const checkWinner = (board: CellValue[]): { winner: CellValue, winningLine: number[] | null } => {
+  for (const line of WINNING_COMBINATIONS) {
+    const [a, b, c] = line;
+    // If three cells match and aren't empty, we have a winner
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return { winner: board[a], winningLine: line };
+    }
+  }
+  return { winner: null, winningLine: null };
+};
 ```
 
-#### `src/utils/aiPlayer.ts`
-AI opponent implementation:
-- Contains different difficulty levels
-- Implements minimax algorithm for hard mode
-- Provides random moves for easy mode
-- Uses strategic moves for medium mode
-
-Key Functions Explained:
-1. `makeEasyAIMove`: Makes random valid moves
-2. `makeMediumAIMove`: Blocks wins and takes obvious moves
-3. `makeHardAIMove`: Uses minimax for optimal play
+### 6. `src/utils/aiPlayer.ts`
+Computer opponent logic:
 ```typescript
-// Minimax algorithm simplified explanation:
-function minimax(board, depth, isMaximizing) {
-  // 1. Check if game is over
-  // 2. If maximizing player (AI):
-  //    - Try all moves and pick highest score
-  // 3. If minimizing player (Human):
-  //    - Try all moves and pick lowest score
-  // 4. Return best score found
+// Easy mode: just picks random empty spots
+export const makeEasyAIMove = (gameState: GameState): number => {
+  const availableMoves = gameState.board
+    .map((cell, index) => cell === null ? index : null)
+    .filter((index): index is number => index !== null);
+  
+  // Return a random available cell
+  return availableMoves[Math.floor(Math.random() * availableMoves.length)];
+};
+
+// Medium mode: tries to win or block wins
+export const makeMediumAIMove = (gameState: GameState): number => {
+  const board = gameState.board;
+  const aiPlayer = gameState.currentPlayer;
+  const humanPlayer = aiPlayer === 'X' ? 'O' : 'X';
+  
+  // Check if AI can win in one move
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) {
+      const boardCopy = [...board];
+      boardCopy[i] = aiPlayer;
+      const { winner } = checkWinner(boardCopy);
+      
+      if (winner === aiPlayer) {
+        return i; // Winning move
+      }
+    }
+  }
+  
+  // Block human player if they can win in one move
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) {
+      const boardCopy = [...board];
+      boardCopy[i] = humanPlayer;
+      const { winner } = checkWinner(boardCopy);
+      
+      if (winner === humanPlayer) {
+        return i; // Blocking move
+      }
+    }
+  }
+  
+  // Try to take the center
+  if (board[4] === null) {
+    return 4;
+  }
+  
+  // Take a random move
+  return makeEasyAIMove(gameState);
+};
+
+// Hard mode: uses minimax algorithm
+export const makeHardAIMove = (gameState: GameState): number => {
+  const board = [...gameState.board];
+  const aiPlayer = gameState.currentPlayer;
+  
+  let bestScore = -Infinity;
+  let bestMove = -1;
+  
+  // Try each available move and choose the best one
+  for (let i = 0; i < board.length; i++) {
+    if (board[i] === null) {
+      board[i] = aiPlayer;
+      const score = minimax(board, 0, false, aiPlayer);
+      board[i] = null;
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = i;
+      }
+    }
+  }
+  
+  return bestMove;
+};
+```
+
+### 7. `src/utils/scoreManager.ts`
+Keeps track of wins and losses:
+```typescript
+// What stats we track
+interface GameStats {
+  gamesPlayed: number;
+  wins: { X: number, O: number };
+  draws: number;
+  streak: number;
+  lastWinner: 'X' | 'O' | null;
+}
+
+// Saves scores to browser storage
+export const saveScores = (data: ScoreData): void => {
+  localStorage.setItem('tic-tac-toe-stats', JSON.stringify(data));
+};
+
+// Updates stats after each game
+export const updateStats = (
+  mode: 'human' | 'easy' | 'medium' | 'hard',
+  winner: 'X' | 'O' | null
+): ScoreData => {
+  const currentStats = loadScores();
+  
+  // Determine which stats object to update
+  let statsToUpdate: GameStats;
+  if (mode === 'human') {
+    statsToUpdate = currentStats.playerStats;
+  } else {
+    statsToUpdate = currentStats.aiStats[mode];
+  }
+  
+  // Update the stats
+  statsToUpdate.gamesPlayed += 1;
+  
+  if (winner) {
+    statsToUpdate.wins[winner] += 1;
+    
+    // Update streak
+    if (statsToUpdate.lastWinner === winner) {
+      statsToUpdate.streak += 1;
+    } else {
+      statsToUpdate.streak = 1;
+    }
+    statsToUpdate.lastWinner = winner;
+  } else {
+    statsToUpdate.draws += 1;
+    statsToUpdate.streak = 0;
+    statsToUpdate.lastWinner = null;
+  }
+  
+  // Save updated stats
+  saveScores(currentStats);
+  
+  return currentStats;
+};
+```
+
+### 8. `src/index.css`
+Styles the game:
+```css
+/* Basic colors and background */
+:root {
+  --background: #ffffff;
+  --primary: #9b87f5;
+  --secondary: #7E69AB;
+}
+
+/* Animations for when pieces appear */
+@keyframes pop-in {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+/* Makes background look nice */
+.game-background {
+  background: linear-gradient(135deg, #D6BCFA 0%, #9b87f5 100%);
 }
 ```
 
-#### `src/utils/scoreManager.ts`
-Score and statistics management:
-- Handles local storage of game stats
-- Manages different statistics for each mode
-- Updates scores after each game
-- Provides score reset functionality
-
-## Complex Concepts Explained 🤔
+## Complex Parts Explained 🤔
 
 ### 1. Minimax Algorithm
-The minimax algorithm in `aiPlayer.ts` is used for the "hard" AI mode:
-- It's a recursive algorithm that simulates all possible moves
-- For each move, it alternates between maximizing (AI) and minimizing (player)
-- The depth parameter helps prioritize winning in fewer moves
-- Scores: Win = +10, Loss = -10, Draw = 0 (adjusted by depth)
+The hard AI uses this to look ahead at all possible moves:
+```typescript
+function minimax(board, depth, isMaximizing) {
+  // 1. First checks if game is over
+  // 2. If AI's turn (maximizing):
+  //    - Tries each possible move
+  //    - Picks move with highest score
+  // 3. If player's turn (minimizing):
+  //    - Tries each possible move
+  //    - Picks move with lowest score
+  // 4. Returns best score found
+}
+```
 
-### 2. State Management
-Game state is managed through React's useState:
-- `gameState` contains current board state, player turn, and game status
-- State updates are immutable (creates new state objects)
-- UseEffect hooks handle AI moves and game end conditions
+### 2. React State Management
+The game uses React's useState to track:
+- Current board state (X's and O's)
+- Whose turn it is
+- If someone won
+- Game mode (vs human or AI difficulty)
 
 ### 3. Local Storage
-Score management uses browser's localStorage:
-- Stores statistics persistently
-- Separates stats by game mode
-- Updates automatically after each game
-- Handles data serialization/deserialization
-
-### 4. Responsive Design
-The game uses Tailwind CSS for responsive layout:
-- Adapts to different screen sizes
-- Uses CSS Grid for game board
-- Implements flexible spacing
-- Provides consistent look across devices
-
-## How to Play 🎮
-
-1. Choose game mode:
-   - Human vs Human
-   - AI Easy (random moves)
-   - AI Medium (basic strategy)
-   - AI Hard (unbeatable)
-
-2. Game rules:
-   - X always goes first
-   - Players alternate turns
-   - Three in a row wins
-   - Game ends in draw if board fills up
-
-3. Controls:
-   - Click/tap cells to make moves
-   - Use "New Game" to restart
-   - Check stats to view performance
+Saves game stats to your browser:
+- Uses localStorage.setItem to save
+- Uses localStorage.getItem to load
+- Keeps track of different stats for each game mode
 
 ## Troubleshooting 🔧
 
 Common issues and solutions:
 1. AI not responding: Check game mode selection
 2. Stats not saving: Clear browser cache
-3. Animation issues: Refresh the page
-4. Game stuck: Use New Game button
+3. Game stuck: Use New Game button
 
 ## Author
 Created by sujith © 2025
-
